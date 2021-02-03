@@ -1,0 +1,101 @@
+void __fastcall firehose_main(sbl_struct *sbl)
+{
+  firehoseInit();
+  while ( 1 )
+  {
+    handle_input();
+    OUT("logbuf@0x%08X fh@0x%08X");
+  }
+}
+
+int handle_input()
+{
+[...]
+  do
+  {
+[...]
+    result = sub_802C764(&v3, SHIDWORD(v0), v0, SHIDWORD(v0), &v4);
+  }
+  while ( !v4 );
+  if ( !result )
+  {
+    v2 = sub_804A55E(&unk_806DCC0, v3);
+    if ( sub_8049CEC(v2) == 1 )
+    {
+      OUT("XML (%d bytes) not validated");
+[...]
+    }
+    else if ( v4 <= 0x1000 )
+    {
+[...]
+      do
+        result = parse_command();
+      while ( result != 1 );
+    }
+    else
+    {
+      OUT("XML file cannot fit in buffer");
+      result = sub_804A55E(&unk_806DCC0, 0);
+    }
+  }
+  return result;
+}
+
+int firehose_parse_command()
+{
+[...]
+  v1 = get_next(&xmlCommand);
+  memzero(&v4, 0x200u);
+  switch ( v1 )
+  {
+    case 0:
+      v2 = 1;
+      goto LABEL_46;
+    case 4:
+      sub_8026D40(&xmlCommand, &v4, 0x200uLL);
+      if ( get_element_name(&xmlCommand, "data") )
+      {
+        v2 = 1;
+        goto LABEL_46;
+      }
+      break;
+    case 1:
+      if ( get_element_name(&xmlCommand, "configure") )
+      {
+        v2 = sub_80157B4();
+        goto LABEL_46;
+      }
+      if ( get_element_name(&xmlCommand, "program") )
+      {
+        v2 = fh_program();
+        goto LABEL_46;
+      }
+[...]      
+	if ( get_element_name(&xmlCommand, "read") )
+      {
+        v2 = fh_read();
+        goto LABEL_46;
+      }
+      if ( get_element_name(&xmlCommand, "getstorageinfo") )
+      {
+        v2 = fh_getstorageinfo();
+        goto LABEL_46;
+      }
+      if ( get_element_name(&xmlCommand, "erase") )
+      {
+        v2 = fh_erase();
+        goto LABEL_46;
+      }
+[...]
+      if ( get_element_name(&xmlCommand, "peek") )
+      {
+        v2 = fh_peek();
+        goto LABEL_46;
+      }
+      if ( get_element_name(&xmlCommand, "poke") )
+      {
+        v2 = fh_poke();
+        goto LABEL_46;
+      }
+[...]
+}
