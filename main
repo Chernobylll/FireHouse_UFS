@@ -1,0 +1,37 @@
+LOAD:0805B0C8 callbacks       DCD nullsub_36+1       
+LOAD:0805B0CC                 DCD boot_flash_init+1
+LOAD:0805B0D0                 DCD sub_8018E8C+1
+LOAD:0805B0D4                 DCD sub_8039C80+1
+LOAD:0805B0D8                 DCD sub_803986C+1
+LOAD:0805B0DC                 DCD sub_8039634+1  
+LOAD:0805B0E0                 DCD nullsub_37+1
+LOAD:0805B0E4                 DCD sub_803A2B8+1
+LOAD:0805B0E8                 DCD clock_init_start+1
+LOAD:0805B0EC                 DCD sub_8019388+1
+LOAD:0805B0F0                 DCD boot_dload+1
+int __fastcall ImageLoad(sbl_struct *sbl, image_load_struct *aImageLoad)
+{
+  [...]
+  loop_callbacks(sbl, aImageLoad->callbacks);
+  [...]
+  if ( imageLoad->field_14 == 1 )
+  {
+    v5 = sub_801CCDC();
+    uartB("Image Load, Start");
+    v8 = imageLoad->field_C;
+    if ( v8 == 1 )
+    {
+      if ( !boot_pbl_is_flash() )
+      {
+        [...]
+        ERROR("sbl1_sahara.c", 816, 0x1000064);
+        while ( 1 )
+          ;
+      }
+	[...]
+	  boot_elf_loader(v9, &v27);
+	[...] 
+  loop_callbacks(sbl, imageLoad->callbacks2);
+	[...]
+  return result;
+}
