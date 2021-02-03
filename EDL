@@ -1,0 +1,6 @@
+[Primary Bootloader (PBL)]
+ |
+ `---EDL---.
+            [Programmer (Firehose)]
+            `- Commands (through USB)
+ 
