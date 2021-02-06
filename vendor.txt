@@ -1,0 +1,284 @@
+From dd4d56bfee606e75baca998584bdccebf9e9bc57 Mon Sep 17 00:00:00 2001
+From: lijiang <Chernobylll@oppo.com>
+Date: Fri, 17 May 2020 12:32:12 +0800
+Subject: [PATCH] =?UTF-8?q?[BSP.Kernel.Boot][1/1]{=E7=A7=BB=E6=A4=8DNV?=
+ =?UTF-8?q?=E5=A4=87=E4=BB=BD=E6=81=A2=E5=A4=8D=E7=9A=84=E6=9C=BA=E5=88=B6?=
+ =?UTF-8?q?}?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+适用范围：{Q/QCOM/ALL/ALL}
+准入id：{0}
+分析：{checklist 1766558,移植NV备份恢复的机制}
+方案：{移植NV备份恢复的机制}
+风险及影响[快/稳/省/功能/安全隐私]：{稳}
+测试建议：{}
+跨组依赖(topic name)：{4250 checklist}
+
+Change-Id: I8b592e3fef68b46e67efea2233d9097e8d91f4cb
+---
+ arch/arm64/configs/vendor/bengal-perf_defconfig |   4 +
+ arch/arm64/configs/vendor/bengal_defconfig      |   4 +
+ drivers/soc/oppo/Kconfig                        |   4 +
+ drivers/soc/oppo/Makefile                       |   5 +
+ drivers/soc/oppo/oppo_mdmrst/Kconfig            |   7 +
+ drivers/soc/oppo/oppo_mdmrst/Makefile           |   4 +
+ drivers/soc/oppo/oppo_mdmrst/oppo_mdmrst.c      | 170 ++++++++++++++++++++++++
+ 7 files changed, 198 insertions(+)
+ create mode 100755 drivers/soc/oppo/oppo_mdmrst/Kconfig
+ create mode 100755 drivers/soc/oppo/oppo_mdmrst/Makefile
+ create mode 100755 drivers/soc/oppo/oppo_mdmrst/oppo_mdmrst.c
+
+diff --git a/arch/arm64/configs/vendor/bengal-perf_defconfig b/arch/arm64/configs/vendor/bengal-perf_defconfig
+index 09989b5..5c8338a 100755
+--- a/arch/arm64/configs/vendor/bengal-perf_defconfig
++++ b/arch/arm64/configs/vendor/bengal-perf_defconfig
+@@ -734,3 +734,7 @@ CONFIG_OPPO_RF_CABLE_MONITOR=y
+ #//Bin.Xu@BSP.Kernel.Stability, 2020/5/11, add for slab_trace
+ CONFIG_SLABTRACE_DEBUG=y
+ #endif /* VENDOR_EDIT */
++#ifdef VENDOR_EDIT
++#//zhenwenxian@BSP.Power.Basic, 2017/01/12, Add for NV recovery
++CONFIG_RECORD_MDMRST=y
++#endif /* VENDOR_EDIT */
+diff --git a/arch/arm64/configs/vendor/bengal_defconfig b/arch/arm64/configs/vendor/bengal_defconfig
+index d861339..5d90f05 100755
+--- a/arch/arm64/configs/vendor/bengal_defconfig
++++ b/arch/arm64/configs/vendor/bengal_defconfig
+@@ -800,3 +800,7 @@ CONFIG_OPPO_RF_CABLE_MONITOR=y
+ #//Bin.Xu@BSP.Kernel.Stability, 2020/5/11, add for slab_trace
+ CONFIG_SLABTRACE_DEBUG=y
+ #endif /* VENDOR_EDIT */
++#ifdef VENDOR_EDIT
++#//zhenwenxian@BSP.Power.Basic, 2017/01/12, Add for NV recovery
++CONFIG_RECORD_MDMRST=y
++#endif /* VENDOR_EDIT */
+diff --git a/drivers/soc/oppo/Kconfig b/drivers/soc/oppo/Kconfig
+index 48b88e1..0ab8c7a 100755
+--- a/drivers/soc/oppo/Kconfig
++++ b/drivers/soc/oppo/Kconfig
+@@ -34,4 +34,8 @@ source "drivers/soc/oppo/oppo_healthinfo/Kconfig"
+ source "drivers/soc/oppo/oppo_nfc/Kconfig"
+ #endif /* VENDOR_EDIT */
+ 
++#ifdef VENDOR_EDIT
++#//zhenwenxian@BSP.Power.Basic, 2017/01/12, Add for NV recovery
++source "drivers/soc/oppo/oppo_mdmrst/Kconfig"
++#endif /* VENDOR_EDIT */
+ 
+diff --git a/drivers/soc/oppo/Makefile b/drivers/soc/oppo/Makefile
+index 40b039e..ce275c3 100755
+--- a/drivers/soc/oppo/Makefile
++++ b/drivers/soc/oppo/Makefile
+@@ -5,3 +5,8 @@ obj-y +=  oppo_healthinfo/
+ #/* Yu.Kun@CN.NFC.Basic.Hardware, 2020/03/24, Add for oppo nfc chipset */
+ obj-$(CONFIG_OPPO_NFC)     +=  oppo_nfc/
+ #endif /* VENDOR_EDIT */
++
++#ifdef VENDOR_EDIT
++#//zhenwenxian@BSP.Power.Basic, 2017/01/12, Add for NV recovery
++obj-$(CONFIG_RECORD_MDMRST)     +=  oppo_mdmrst/
++#endif /* VENDOR_EDIT */
+diff --git a/drivers/soc/oppo/oppo_mdmrst/Kconfig b/drivers/soc/oppo/oppo_mdmrst/Kconfig
+new file mode 100755
+index 0000000..210aa6e
+--- /dev/null
++++ b/drivers/soc/oppo/oppo_mdmrst/Kconfig
+@@ -0,0 +1,7 @@
++# ifdef VENDOR_EDIT
++# yixue.ge add for config oppo software common soft
++config RECORD_MDMRST
++bool "config record mdmrst"
++help
++    define this config to count the modem restart times.
++#endif /* VENDOR_EDIT */
+diff --git a/drivers/soc/oppo/oppo_mdmrst/Makefile b/drivers/soc/oppo/oppo_mdmrst/Makefile
+new file mode 100755
+index 0000000..e31af1a
+--- /dev/null
++++ b/drivers/soc/oppo/oppo_mdmrst/Makefile
+@@ -0,0 +1,4 @@
++# ifdef VENDOR_EDIT
++# geyixue@BSP.Driver, 2014/07/29, Add for OPPO device info
++obj-$(CONFIG_RECORD_MDMRST)	+=  oppo_mdmrst.o
++# endif /* VENDOR_EDIT */
+diff --git a/drivers/soc/oppo/oppo_mdmrst/oppo_mdmrst.c b/drivers/soc/oppo/oppo_mdmrst/oppo_mdmrst.c
+new file mode 100755
+index 0000000..cd3ac3f
+--- /dev/null
++++ b/drivers/soc/oppo/oppo_mdmrst/oppo_mdmrst.c
+@@ -0,0 +1,170 @@
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/miscdevice.h>
++#ifdef CONFIG_ARM
++#include <linux/sched.h>
++#else
++#include <linux/wait.h>
++#endif
++#include <linux/fs.h>
++#include <linux/uaccess.h>
++#include <linux/poll.h>
++
++
++/*****yixue.ge ******/
++#define MDMREASON_BUF_LEN 128
++static wait_queue_head_t mdmreason_wq;
++static int mdmreason_flag = 0;
++static char mdmreason_buf[MDMREASON_BUF_LEN] = {0};
++void mdmreason_set(char * buf)
++{
++        if ((buf != NULL) && (buf[0] != '\0')) {
++                if (strlen(buf) >= MDMREASON_BUF_LEN) {
++                        memcpy(mdmreason_buf, buf, MDMREASON_BUF_LEN - 1);
++                        mdmreason_buf[MDMREASON_BUF_LEN - 1] = '\0';
++                } else {
++                        strcpy(mdmreason_buf, buf);
++                }
++                mdmreason_flag = 1;
++                wake_up_interruptible(&mdmreason_wq);
++        }
++}
++EXPORT_SYMBOL(mdmreason_set);
++
++/*this write interface just use for test*/
++static ssize_t mdmreason_write(struct file *file, const char __user * buf,
++                size_t count, loff_t * ppos)
++{
++        /*just for test*/
++        if (count > MDMREASON_BUF_LEN) {
++                count = MDMREASON_BUF_LEN;
++        }
++        if (count > *ppos) {
++                count -= *ppos;
++        }
++        else
++                count = 0;
++
++        printk("mdmreason_write is called\n");
++
++        if (copy_from_user(mdmreason_buf, buf, count)) {
++                return -EFAULT;
++        }
++        *ppos += count;
++
++        mdmreason_flag = 1;
++        wake_up_interruptible(&mdmreason_wq);
++
++        return count;
++}
++
++
++static unsigned int mdmreason_poll (struct file *file, struct poll_table_struct *pt)
++{
++        unsigned int ptr = 0;
++
++        poll_wait(file, &mdmreason_wq, pt);
++
++        if (mdmreason_flag) {
++                ptr |= POLLIN | POLLRDNORM;
++                mdmreason_flag = 0;
++        }
++        return ptr;
++}
++
++static ssize_t mdmreason_read(struct file *file, char __user *buf,
++                size_t count, loff_t *ppos)
++{
++        size_t size = 0;
++
++        if (count > MDMREASON_BUF_LEN) {
++                count = MDMREASON_BUF_LEN;
++        }
++        size = count < strlen(mdmreason_buf) ? count : strlen(mdmreason_buf);
++
++        if (size > *ppos) {
++                size -= *ppos;
++        }
++        else
++                size = 0;
++
++        if (copy_to_user(buf, mdmreason_buf, size)) {
++                return -EFAULT;
++        }
++        /*mdmreason_flag = 0;*/
++        *ppos += size;
++
++        return size;
++}
++
++static int mdmreason_release (struct inode *inode, struct file *file)
++{
++        /*mdmreason_flag = 0;*/
++        /*memset(mdmreason_buf, 0, MDMREASON_BUF_LEN);*/
++        return 0;
++}
++
++
++static const struct file_operations mdmreason_device_fops = {
++        .owner  = THIS_MODULE,
++        .read   = mdmreason_read,
++        .write        = mdmreason_write,
++        .poll        = mdmreason_poll,
++        .llseek = generic_file_llseek,
++        .release = mdmreason_release,
++};
++
++static struct miscdevice mdmreason_device = {
++        MISC_DYNAMIC_MINOR, "mdmreason", &mdmreason_device_fops
++};
++
++
++
++/*****yixue.ge add end******/
++
++wait_queue_head_t mdmrst_wq;
++/*unsigned int mdmrest_flg;*/
++unsigned int mdmrest_count = 0;
++
++ssize_t mdmrst_read(struct file *file, char __user *buf,
++                size_t count, loff_t *ppos)
++{
++        char *tmp = "1";
++
++        /*wait_event_interruptible(mdmrst_wq, mdmrest_flg);*/
++        /*if (copy_to_user(buf, tmp, strlen(tmp)))*/
++        if (copy_to_user(buf, &mdmrest_count, 1)) {
++                return -EFAULT;
++        }
++        /*mdmrest_flg = 0;*/
++
++        return strlen(tmp);
++}
++
++static const struct file_operations mdmrst_device_fops = {
++        .owner  = THIS_MODULE,
++        .read   = mdmrst_read,
++};
++
++static struct miscdevice mdmrst_device = {
++        MISC_DYNAMIC_MINOR, "mdmrst", &mdmrst_device_fops
++};
++
++static int __init mdmrst_init(void)
++{
++        init_waitqueue_head(&mdmrst_wq);
++        init_waitqueue_head(&mdmreason_wq);
++        misc_register(&mdmreason_device);
++        return misc_register(&mdmrst_device);
++}
++
++static void __exit mdmrst_exit(void)
++{
++        misc_deregister(&mdmreason_device);
++        misc_deregister(&mdmrst_device);
++}
++
++module_init(mdmrst_init);
++module_exit(mdmrst_exit);
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Geliang Tang <geliang.tang@oppo.com>");
+-- 
+2.7.4
+
