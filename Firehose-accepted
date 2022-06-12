@@ -46,7 +46,7 @@ int firehose_parse_command()
 [...]
   v1 = get_next(&xmlCommand);
   memzero(&v4, 0x200u);
-  switch ( v1 )
+  switch ( v6 )
   {
     case 0:
       v2 = 1;
